@@ -15,12 +15,10 @@ class Model_regression:
             self.weights.append(np.random.rand(nb_output, nb_neurones))
             self.weights.append(np.zeros(nb_neurones))
             nb_output = nb_neurones
-        #print(self.weights)
 
     def preactiv(self, x):
         res = x
         for i in range(0, len(self.weights), 2):
-            #print(self.weights[i].shape)
             res = self.activ(res @ self.weights[i] + self.weights[i+1])
 
         return res
@@ -64,6 +62,7 @@ class Model_regression:
         y = y
         i = 0
         epo = 0
+        steps_per_epoch = step // epochs
 
         default_batch_gradient = []
         for k in range(0, len(self.weights), 2):
@@ -75,7 +74,7 @@ class Model_regression:
         #for q in range(len(default_batch_gradient)):
         #    print(default_batch_gradient[q].shape)
 
-        for etape in range(step):
+        for etape in tqdm(range(step)):
             i += 1
             bx = x.iloc[batch_size*i : batch_size*(i+1) - 1]
             by = y.iloc[batch_size*i : batch_size*(i+1) - 1]
@@ -95,24 +94,20 @@ class Model_regression:
 
                 # update of the last neurone
                 act_deriv = 1 #self.activation_deriv(post_a)
-                #print("-----------")
-                #print(res_l[-2].shape)
-                #print(batch_gradient[-2].shape)
-                #print((loss * act_deriv * res_l[-2]) + batch_gradient[-2])
-                batch_gradient[-2] += loss * act_deriv * np.expand_dims(res_l[-2], 1)
+                batch_gradient[-2] += self.activ(np.expand_dims(res_l[-2], 1)) * loss
                 batch_gradient[-1] += loss * act_deriv
 
-                for h in range(0, len(self.weights), -2): # backpropagation
-                    loss = self.activ(res_l[h/2]) * np.dot(self.weights[h+2], loss)
-                    batch_gradient[h]   = res_l[h/2] * loss
-                    batch_gradient[h+1] = res_l[h/2]
+                for b in reversed(range(0, len(self.weights)-2, 2)): # backpropagation
+                    l_output = res_l[(b//2) + 1] # layer output
+                    loss = self.activ(l_output) * np.dot(loss, self.weights[b+2].T)
+                    batch_gradient[b]   = l_output * loss
+                    batch_gradient[b+1] = l_output
+                    #print(l_output * loss)
 
             for k in range(0, len(self.weights), 2):
-                #print(batch_gradient[k])
                 self.weights[k] -= learning_rate * (1 / batch_size) * batch_gradient[k]
                 self.weights[k+1] -= learning_rate * (1 / batch_size) * batch_gradient[k+1]
 
-            #print(self.weights)
 
             if x.shape[0] < batch_size*(i+1):
                 p = np.random.permutation(len(x))
@@ -120,29 +115,35 @@ class Model_regression:
                 y = y.iloc[p]
                 i = 0
 
-            if etape != 0 and etape % (step / epochs) == 0:
+            if etape != 0 and etape % (steps_per_epoch) == 0:
                 print("=====================")
-                predic = self.predict_on_dataset(x_val)
-                predic_train = self.predict_on_dataset(x)
-                print("Epoch: ", epo, "| loss val: ", ((predic - y_val)**2).mean() / 2, " | loss train ", ((predic_train - y)**2).mean() / 2 )
+                predic_val = self.predict_on_dataset(x_val)
+                predic_train = self.predict_on_dataset(x.iloc[i:i+(step//epochs)])
+                print("predic_train: ", predic_train)
+                print("Epoch: ", epo, "| loss val: ", ((predic_val - y_val)**2).mean(), " | loss train ", ((predic_train - y.iloc[i:i+(step//epochs)])**2).mean() / 2 )
+                print("mean predic: ", predic_val.mean())
+                for l in self.weights:
+                    #print(l)
+                    pass
                 epo += 1
 
 
-dataset = pd.read_csv("./winequality-red.csv")
+#dataset = pd.read_csv("./winequality-red.csv")
 
-train = dataset
+#train = dataset
 #validation = dataset.tail(199)
 
-x_train = train.drop('quality', 1)
-y_train = train.quality
+#x_train = train.drop('quality', 1)
+#y_train = train.quality
 
-# train_sata = pd.read_csv("./train.csv")
-# x_train = train_sata.drop('target', 1)
-# y_train = train_sata.target
+train_sata = pd.read_csv("./train_satander.csv")
+x_train = train_sata.drop('target', 1)
+x_train = x_train.drop('ID_code', 1)
+y_train = train_sata.target
 
-cali_dataframe = pd.read_csv("./california_housing_train.csv")
-x_train = cali_dataframe.drop("median_house_value", 1)
-y_train = cali_dataframe.median_house_value / 1000
+#cali_dataframe = pd.read_csv("./california_housing_train.csv")
+#x_train = cali_dataframe.drop("median_house_value", 1)
+#y_train = cali_dataframe.median_house_value / 1000
 
 def normalize(x):
     return (x-min(x))/(max(x)-min(x))
@@ -155,9 +156,15 @@ for x in x_train:
 x_val = x_train.tail(500)
 y_val = y_train.tail(500)
 
-model = Model_regression(x_train.shape[1], (4, 5, 1))
-#print(model.predict(x_train.iloc[0]))
-for l in model.weights:
-    print(l)
+print("y summary")
+print(y_train.describe())
 
-model.fit(x_train, y_train, step=10000, epochs=10, batch_size=20, learning_rate=0.005, validation_datas=(x_val, y_val))
+model = Model_regression(x_train.shape[1], (10, 10, 10, 1))
+print("first predic: ", model.predict(x_train.iloc[0]))
+
+#print("starting weights")
+for l in model.weights:
+    #print(l)
+    pass
+
+model.fit(x_train, y_train, step=1000, epochs=10, batch_size=50, learning_rate=0.0000005, validation_datas=(x_val, y_val))

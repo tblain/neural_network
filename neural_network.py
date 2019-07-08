@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import math
 
 
 class NN:
@@ -152,14 +151,14 @@ class NN:
 # x_train = train.drop('quality', 1)
 # y_train = train.quality
 
-train_sata = pd.read_csv("./train_satander.csv")
-x_train = train_sata.drop("target", 1)
-x_train = x_train.drop("ID_code", 1)
-y_train = train_sata.target
+# train_sata = pd.read_csv("./train_satander.csv")
+# x_train = train_sata.drop("target", 1)
+# x_train = x_train.drop("ID_code", 1)
+# y_train = train_sata.target
 
-# cali_dataframe = pd.read_csv("./california_housing_train.csv")
-# x_train = cali_dataframe.drop("median_house_value", 1)
-# y_train = cali_dataframe.median_house_value / 1000
+cali_dataframe = pd.read_csv("./california_housing_train.csv")
+x_train = cali_dataframe.drop("median_house_value", 1)
+y_train = cali_dataframe.median_house_value / 1000
 
 
 def normalize(x):
@@ -177,7 +176,7 @@ y_val = y_train.tail(500)
 print("y summary")
 print(y_train.describe())
 
-model = Model_regression(x_train.shape[1], (10, 10, 10, 1))
+model = NN(x_train.shape[1], (10, 10, 10, 1))
 print("first predic: ", model.predict(x_train.iloc[0]))
 
 # print("starting weights")

@@ -127,7 +127,7 @@ class NN:
                 print("=====================")
                 predic_val = self.predict_on_dataset(x_val)
                 predic_train = self.predict_on_dataset(x.iloc[i : i + (step // epochs)])
-                print("predic_train: ", predic_train)
+                # print("predic_train: ", predic_train)
                 print(
                     "Epoch: ",
                     epo,
@@ -190,6 +190,6 @@ model.fit(
     step=1000,
     epochs=10,
     batch_size=50,
-    learning_rate=0.0000005,
+    learning_rate=0.005,
     validation_datas=(x_val, y_val),
 )

@@ -55,7 +55,7 @@ class Model_regression:
         i = 0
         epo = 0
 
-        for etape in range(step):
+        for etape in tqdm(range(step)):
             i += 1
             bx = x.iloc[batch_size*i : batch_size*(i+1) - 1]
             by = y.iloc[batch_size*i : batch_size*(i+1) - 1]
@@ -84,7 +84,7 @@ class Model_regression:
                 print("=====================")
                 predic = self.predict_on_dataset(x_val)
                 predic_train = self.predict_on_dataset(x)
-                print("Epoch: ", epo, "| loss val: ", ((predic - y_val)**2).mean() / 2, " | loss train ", ((predic_train - y)**2).mean() / 2 )
+                print("Epoch: ", epo, "| loss val: ", math.sqrt(((predic - y_val)**2).mean() ), " | loss train ", math.sqrt(((predic_train - y)**2).mean()))
                 epo += 1
 
 
@@ -117,4 +117,4 @@ y_val = y_train.tail(500)
 
 model = Model_regression(x_train.shape[1])
 
-model.fit(x_train, y_train, step=10000, epochs=10, batch_size=20, learning_rate=0.005, validation_datas=(x_val, y_val))
+model.fit(x_train, y_train, step=100000, epochs=10, batch_size=20, learning_rate=0.5, validation_datas=(x_val, y_val))

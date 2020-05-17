@@ -160,7 +160,6 @@ cali_dataframe = pd.read_csv("./california_housing_train.csv")
 x_train = cali_dataframe.drop("median_house_value", 1)
 y_train = cali_dataframe.median_house_value / 1000
 
-
 def normalize(x):
     return (x - min(x)) / (max(x) - min(x))
 
